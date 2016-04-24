@@ -319,6 +319,165 @@ Congratulations! You have successfully modified ext/first_test/config.m4. Module
 
 源码文件first_test.c, 需要我们修改，以实现预定的功能。我们打开first_test.c 找到calcpi函数，如下：
 
+```
+PHP_FUNCTION(calcpi)
+{
+	int argc = ZEND_NUM_ARGS();
+	long iterations;
+	
+	if (zend_parse_parameters(argc TSRMLS_CC, "l", &iterations) == FAILURE)
+		return;
+	php_error(E_WARNING, "calcpi: not yet implemented");
+}
+
+```
+代码段4 自动生成的calcpi函数
+
+```PHP_FUNCTION(calcpi)```: 声明一个函数原型
+接下来两行声明了一些必须局部变量 argc， iterations；最后面的```php_error```用来产生一个waning信息提示函数还没有实现。
+***```zend_parse_parameters```***函数是最重要的部分， 这部分将php脚本中的变量和扩展中的c语言的变量关联起来。这部分后面会详细介绍。
+
+接下来我们将使用一个简单的PI算法实现以上函数。以上代码变成以下：
+
+```
+
+PHP_FUNCTION(calcpi)
+{
+	int argc = ZEND_NUM_ARGS();
+	long iterations;
+	int index, hits;
+	double randx, randy, distance, value;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &iterations) == FAILURE) {
+		return;
+	}
+
+	hits = 0;
+	for (index = 0; index < iterations; index++) {
+		randx = rand();
+		randy = rand();
+
+		randx /= RAND_MAX;
+		randy /= RAND_MAX;
+
+		distance = sqrt((randx * randx) + (randy * randy));
+
+		if (distance <= 1.0) {
+			hits++;
+		}
+		value = ((double)hits / (double)index);
+		value *= 4.0;
+	}
+
+	value = ((double) hits / (double)iterations);
+	value *= 4.0;
+	RETVAL_DOUBLE(value);
+}
+
+```
+代码5 calcpi的完整实现
+
+上述代码去掉了waning 信息增加了pi的简单算法。对于一个扩展而言最重要的变化是最后一行***RETVAL_DOUBLE*** 表示返回值是double类型。
+
+执行以下代码：
+
+```
+  1 <?php
+  2 print(calcpi(10000));
+```
+得到3.1496
+
+reverse 函数的实现如下, 以下代码演示了扩展的基本编写，并非高效c语言编程的范例。
+
+```
+
+PHP_FUNCTION(reverse)
+{
+	char *input = NULL;
+	int argc = ZEND_NUM_ARGS();
+	int input_len;
+	char* workstr;
+	int index;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &input, &input_len) == FAILURE) {
+		return;
+	}
+
+	workstr = (char*) emalloc(input_len + 1);
+	memset(workstr, 0, input_len + 1);
+
+	for (index = 0; index < input_len; index++) {
+		workstr[index] = input[input_len - (index + 1)];
+	}
+
+	RETVAL_STRING(workstr, 1);
+	efree(workstr);
+}
+
+```
+***代码6 reverse函数实现***
+
+以上函数主要演示了两件事。 ***第一***，使用emalloc， efree 内存管理语法代替标准c语言中的malloc/free。 当编写扩展时，应该优先使用php内置的内存管理函数， 因为这样zend 引擎就可以管理整个内存空间。知晓哪些内存被占用。哪些内存需要自动回收，避免内存泄漏。zend引擎提供了一系列的内存管理函数、这些将会在后面介绍。
+
+***第二*** 以上代码展示了如何返回一个字符串给php。 ```RETVAL_STRING(workstr, 1);``` 函数接受两个参数，字符串指针、bool flag（是否需要用estrdup拷贝复制该字符串）。 在上面的例子中，我分配了一段内存，用于存储逆序的字符串， 然后将该字符串通过```RETVAL_STRING```语法拷贝了一个新的字符串并返回给php。 最后，我释放了这段内存。
+
+或者，我可以不复制，而直接将生成的字符串返回给php，但是我个人觉得最好释放到自己分配的内存，让zend管理引擎自己分配的内存。
+
+***uniquechars函数实现如下***
+
+```
+PHP_FUNCTION(uniquechars)
+{
+	char *input = NULL;
+	int argc = ZEND_NUM_ARGS();
+	int input_len;
+	zend_bool case_sensitive;
+	char* workbuf;
+	int index, work_index;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|b", &input, &input_len, &case_sensitive) == FAILURE) {
+		return;
+	}
+
+	if (argc == 1) {
+		case_sensitive = 1;
+	}
+
+	work_index = 0;
+	workbuf = (char*)emalloc(input_len + 1);
+	memset(workbuf, 0, input_len + 1);
+	for (index = 0; index < input_len; index++) {
+		if (case_sensitive) {
+			if (!strchar(workbuf, input[index])) {
+				workbuf[work_index] = input[index];
+				work_index++;
+			}
+		} else {
+			if (!strchar(workbuf, tolower(input[index]))) {
+				workbuf[work_index] = tolower(input[index]);
+				work_index++;
+			}
+		}
+	}
+
+	array_init(return_value);
+	for (index = 0; index < input_len; index++) {
+		if (workbuf[index] != '\0') {
+			add_next_index_stringl(return_value, &workbuf[index], 1, 1);
+		}
+	}
+
+	efree(workbuf);
+}
+
+```
+
+***代码7 uniquechars函数实现***
+
+
+
+
+
 
 
 
