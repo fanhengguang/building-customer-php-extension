@@ -12,6 +12,8 @@
 
 ## 第一个PHP扩展
 ### 构建脚本
+
+
 下载php源码， 然后进入源码中的扩展目录：
 
 
@@ -129,6 +131,195 @@ first_test.php  | 用于测试扩展的php脚本
 php_first_test.h  | 头文件
 tests  | php测试脚本目录
 ***表2 ext_skel脚本生成的文件***
+
+
+接下来第一步需要编辑config.m4文件。 这个文件会被buildconf使用来更新php configure脚本. config.m4文件是一个unix m4语法文件。更多关于m4的信息可以参见http://www.gnu.org.software/m4/. 该文件包含很多注释。以dnl开头的行都是注释。
+
+first_test 扩展生成的config.m4 文件如下：
+
+```
+dnl $Id$
+dnl config.m4 for extension first_test
+
+dnl Comments in this file start with the string 'dnl'.
+dnl Remove where necessary. This file will not work
+dnl without editing.
+
+dnl If your extension references something external, use with:
+
+dnl PHP_ARG_WITH(first_test, for first_test support,
+dnl Make sure that the comment is aligned:
+dnl [  --with-first_test             Include first_test support])
+
+dnl Otherwise use enable:
+
+dnl PHP_ARG_ENABLE(first_test, whether to enable first_test support,
+dnl Make sure that the comment is aligned:
+dnl [  --enable-first_test           Enable first_test support])
+
+if test "$PHP_FIRST_TEST" != "no"; then
+  dnl Write more examples of tests here...
+
+  dnl # --with-first_test -> check with-path
+  dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
+  dnl SEARCH_FOR="/include/first_test.h"  # you most likely want to change this
+  dnl if test -r $PHP_FIRST_TEST/$SEARCH_FOR; then # path given as parameter
+  dnl   FIRST_TEST_DIR=$PHP_FIRST_TEST
+  dnl else # search default path list
+  dnl   AC_MSG_CHECKING([for first_test files in default path])
+  dnl   for i in $SEARCH_PATH ; do
+  dnl     if test -r $i/$SEARCH_FOR; then
+  dnl       FIRST_TEST_DIR=$i
+  dnl       AC_MSG_RESULT(found in $i)
+  dnl     fi
+  dnl   done
+  dnl fi
+  dnl
+  dnl if test -z "$FIRST_TEST_DIR"; then
+  dnl   AC_MSG_RESULT([not found])
+  dnl   AC_MSG_ERROR([Please reinstall the first_test distribution])
+  dnl fi
+
+  dnl # --with-first_test -> add include path
+  dnl PHP_ADD_INCLUDE($FIRST_TEST_DIR/include)
+
+  dnl # --with-first_test -> check for lib and symbol presence
+  dnl LIBNAME=first_test # you may want to change this
+  dnl LIBSYMBOL=first_test # you most likely want to change this 
+
+  dnl PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
+  dnl [
+  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $FIRST_TEST_DIR/$PHP_LIBDIR, FIRST_TEST_SHARED_LIBADD)
+  dnl   AC_DEFINE(HAVE_FIRST_TESTLIB,1,[ ])
+  dnl ],[
+  dnl   AC_MSG_ERROR([wrong first_test lib version or lib not found])
+  dnl ],[
+  dnl   -L$FIRST_TEST_DIR/$PHP_LIBDIR -lm
+  dnl ])
+  dnl
+  dnl PHP_SUBST(FIRST_TEST_SHARED_LIBADD)
+
+  PHP_NEW_EXTENSION(first_test, first_test.c, $ext_shared)
+fi
+```
+
+代码片段2 执行ext_skel 脚本后生成的config.m4
+
+需要调整16 和18行， 将行收的注释符号dnl去掉即可。 修改后的文件如下：
+
+```
+dnl $Id$
+dnl config.m4 for extension first_test
+
+dnl Comments in this file start with the string 'dnl'.
+dnl Remove where necessary. This file will not work
+dnl without editing.
+
+dnl If your extension references something external, use with:
+
+dnl PHP_ARG_WITH(first_test, for first_test support,
+dnl Make sure that the comment is aligned:
+dnl [  --with-first_test             Include first_test support])
+
+dnl Otherwise use enable:
+
+PHP_ARG_ENABLE(first_test, whether to enable first_test support,
+dnl Make sure that the comment is aligned:
+[  --enable-first_test           Enable first_test support])
+
+if test "$PHP_FIRST_TEST" != "no"; then
+  dnl Write more examples of tests here...
+
+  dnl # --with-first_test -> check with-path
+  dnl SEARCH_PATH="/usr/local /usr"     # you might want to change this
+  dnl SEARCH_FOR="/include/first_test.h"  # you most likely want to change this
+  dnl if test -r $PHP_FIRST_TEST/$SEARCH_FOR; then # path given as parameter
+  dnl   FIRST_TEST_DIR=$PHP_FIRST_TEST
+  dnl else # search default path list
+  dnl   AC_MSG_CHECKING([for first_test files in default path])
+  dnl   for i in $SEARCH_PATH ; do
+  dnl     if test -r $i/$SEARCH_FOR; then
+  dnl       FIRST_TEST_DIR=$i
+  dnl       AC_MSG_RESULT(found in $i)
+  dnl     fi
+  dnl   done
+  dnl fi
+  dnl
+  dnl if test -z "$FIRST_TEST_DIR"; then
+  dnl   AC_MSG_RESULT([not found])
+  dnl   AC_MSG_ERROR([Please reinstall the first_test distribution])
+  dnl fi
+
+  dnl # --with-first_test -> add include path
+  dnl PHP_ADD_INCLUDE($FIRST_TEST_DIR/include)
+
+  dnl # --with-first_test -> check for lib and symbol presence
+  dnl LIBNAME=first_test # you may want to change this
+  dnl LIBSYMBOL=first_test # you most likely want to change this 
+
+  dnl PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
+  dnl [
+  dnl   PHP_ADD_LIBRARY_WITH_PATH($LIBNAME, $FIRST_TEST_DIR/$PHP_LIBDIR, FIRST_TEST_SHARED_LIBADD)
+  dnl   AC_DEFINE(HAVE_FIRST_TESTLIB,1,[ ])
+  dnl ],[
+  dnl   AC_MSG_ERROR([wrong first_test lib version or lib not found])
+  dnl ],[
+  dnl   -L$FIRST_TEST_DIR/$PHP_LIBDIR -lm
+  dnl ])
+  dnl
+  dnl PHP_SUBST(FIRST_TEST_SHARED_LIBADD)
+
+  PHP_NEW_EXTENSION(first_test, first_test.c, $ext_shared)
+fi
+```
+
+代码片段3 修改后的config.m4文件
+
+	需要注意的是， buildconf 脚本需要新版autoconf, automake 和libtool 如果你的系统上没有装，需要下载安装后才能继续
+	
+接下来第二步是执行buildconf脚本。 近期版本的buildconf脚本不能直接执行一个非开发版本的php。 如果你试图执行最新版buildconf脚本， 你可能会遇到警告信息“you should not run buildconf in a release package. use buildconf -- forse to override this check”. 
+
+如果你遇到了以上警告。 可以执行**./buildconf force** 来避免该警告。 
+
+	
+**注意！！！**	
+	
+	注意以上内容有些陈旧。 在新版本的php中一般无需用buildconf命令， 而是使用phpize 命令生成configure脚本(具体内容可以参见 rango 做的视频教程http://wiki.swoole.com/wiki/page/238.html )
+	
+接下来可以继续configure、build， 测试新的php扩展了， 执行以下命令：
+
+```
+./configure --enable-first_test
+make
+sudo make install 
+```
+
+顺利的话、扩展就安装成功了。 接下来需要修改php.ini文件。 在末尾增加一行**extension=first_test.so** 下面就可以测试扩展是否安装成功了
+(以上会first_test扩展目录生成first_test.php 测试脚本)
+
+执行 php first_test.php可以看到以下信息：
+
+```
+Functions available in the test extension:
+confirm_first_test_compiled
+calcpi
+reverse
+uniquechars
+
+
+Congratulations! You have successfully modified ext/first_test/config.m4. Module first_test is now compiled into PHP.
+```
+
+可以看到扩展中已经包含了定义的函数。 但是这些函数还不能使用。 因为我们还没有实现它。 接下来我们要实现这几个函数
+
+
+### 实现扩展
+
+到现在为止我们还没有去检视ext_skel 脚本 生成的头文件和源码文件。 现在需要去研究他们并实现我们定义的函数。生成的头文件是一个非常标准的php扩展头文件，对于第一章我们实现的简单功能来说，无需我们修改此头文件。后面我有更详细的说明。
+
+源码文件first_test.c, 需要我们修改，以实现预定的功能。我们打开first_test.c 找到calcpi函数，如下：
+
+
 
 
 
